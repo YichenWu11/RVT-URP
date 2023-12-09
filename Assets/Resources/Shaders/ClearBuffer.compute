@@ -1,0 +1,17 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel ClearBuffer
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+
+uint _feedbackSize;
+RWStructuredBuffer<uint> _feedbackBuffer;
+
+[numthreads(1,1,1)]
+void ClearBuffer(uint3 id : SV_DispatchThreadID)
+{
+    for (uint i = 0; i < _feedbackSize; i++)
+    {
+        _feedbackBuffer[i] = 0;
+    }
+}
