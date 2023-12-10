@@ -51,10 +51,7 @@ Varyings RenderPageTableVertex(Attributes v)
     o.info = UNITY_ACCESS_INSTANCED_PROP(PageTableProperty, _PageInfo);
     o.pos = mul(mat, v.positionOS);
     #endif
-    // // flip y
-    // #if SHADER_API_D3D11
-    // o.pos.y = -o.pos.y;
-    // #endif
+
     return o;
 }
 

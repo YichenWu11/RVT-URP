@@ -100,6 +100,7 @@ void RenderTileFragment(Varyings IN, out half4 PhysicalTex1 : SV_Target0, out ha
     float originHeight = UnpackHeightmap(_OriginHeightMap.Load(int3(heightCoords, 0)));
 
     PhysicalTex1 = diffuse0 * control.r + diffuse1 * control.g + diffuse2 * control.b + diffuse3 * control.a;
+    // PhysicalTex1 = half4(uv, 0.0h, 0.0h);
 
     half smoothness = dot(control, defaultSmoothness);
 

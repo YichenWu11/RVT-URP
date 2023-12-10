@@ -169,12 +169,11 @@ void RenderDecalFragment(Varyings input, out half4 PhysicalTex1 : SV_Target0, ou
     half4 normal = SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, input.uv);
 
     PhysicalTex1 = half4(surfaceData.albedo, alpha);
-
-    float height = input.positionWS.y * _MaxHeightScale;
-    if (originHeight > height)
-    {
-        height = originHeight;
-    }
+    // float height = input.positionWS.y * _MaxHeightScale;
+    // if (originHeight > height)
+    // {
+    //     height = originHeight;
+    // }
     //PhysicalTex2 = half4(normal.g, normal.a, height, alpha);
     PhysicalTex2 = half4(normal.g, normal.a, surfaceData.smoothness, alpha);
 }

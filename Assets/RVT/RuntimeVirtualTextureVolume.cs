@@ -68,8 +68,7 @@ namespace RuntimeVirtualTexture
             };
             enableRvt = true;
             Shader.EnableKeyword("ENABLE_RVT");
-            //debug_RVT = true;
-            //Shader.EnableKeyword("DEBUG_RVT");
+
             debugRvt = false;
             Shader.DisableKeyword("DEBUG_RVT");
 
@@ -119,15 +118,23 @@ namespace RuntimeVirtualTexture
             if (Input.GetKeyDown(KeyCode.Escape))
                 Application.Quit();
 
+            /* calculate the dps */
             deltaTime += (Time.unscaledDeltaTime - deltaTime) * 0.1f;
             float fps = 1.0f / deltaTime;
 
             if (enableRvt)
             {
+                // physicalTextureManager.ActivateDecals();
+                // TestCase();
+                // return;
+
                 Profiler.BeginSample("Feedback");
                 if (feedBackReader.IsReading())
                 {
                     Profiler.BeginSample("ApplyUpdates");
+                    /*
+                     * update the PhysicalTexture(A and B) and the PageTableTexture 
+                     */
                     ApplyUpdates(feedBackReader.RequestList);
                     Profiler.EndSample();
                 }
@@ -141,13 +148,18 @@ namespace RuntimeVirtualTexture
 //                        Profiler.EndSample();
 //#endif
 
-                        // Get and Analysis Data
+                        /*
+                         * Get and Analysis Data
+                         */
                         Profiler.BeginSample("AnalysisData");
                         feedBackReader.AnalysisData();
                         Profiler.EndSample();
                     }
 
                     Profiler.BeginSample("ReadFeedback");
+                    /*
+                     * readback the feedback buffer from GPU to CPU
+                     */
                     feedBackReader.ReadFeedback(false);
                     Profiler.EndSample();
                 }
@@ -157,7 +169,7 @@ namespace RuntimeVirtualTexture
                 feedBackReader.Clear();
                 Profiler.EndSample();
                 display.SetText(
-                    "FPS:{2:0} RVT:On\nrequests:{0:0}\nallocate page:{1:0}\n",
+                    "FPS:{2:0} RVT:On\nrequests:{0:0}\nrender tile count:{1:0}\n",
                     m_pageUpdateCount,
                     m_physicalUpdateCount, fps);
             }
@@ -179,7 +191,7 @@ namespace RuntimeVirtualTexture
             m_pageTableUpdateRequests = new NativeArray<PageTableUpdateRequest>(reqNumber, Allocator.TempJob);
             // m_physicalTextureUpdateRequests = new NativeArray<PageTableUpdateRequest>(reqNumber, Allocator.TempJob);
 
-            Profiler.BeginSample("Update PageTable");
+            Profiler.BeginSample("Update PageTable and PhysicalTextures");
 
             m_pageUpdateCount = 0;
             m_physicalUpdateCount = 0;
@@ -204,6 +216,7 @@ namespace RuntimeVirtualTexture
                 {
                     if (activeFrame != m_lastActiveFrame)
                     {
+                        // Debug.Log($"{m_lastActiveFrame} {activeFrame}");
                         needUpdatePageTable = true;
                     }
 
@@ -221,7 +234,6 @@ namespace RuntimeVirtualTexture
                     pageTableManager.pageTable.SetActive(req, time);
                     tileId = pageTableManager.pageTable.GetTileId(req);
                     tempReq.PhysicalCoord = new float2(tileId % tileNum, tileId / tileNum);
-                    // Debug.Log(tempReq.PhysicalCoord);
                     physicalTextureManager.RenderTile(tempReq);
                     // m_physicalTextureUpdateRequests[m_physicalUpdateCount] = tempReq;
                     m_physicalUpdateCount++;
@@ -238,16 +250,22 @@ namespace RuntimeVirtualTexture
             Profiler.EndSample();
 
             // Debug.Log($"total: {pageUpdateCount},  new: {newPageNumber}");
-            //if (m_physicalUpdateCount > 0)
-            //{                
-            //    Profiler.BeginSample("Update Physical Texture");
-            //    physicalTextureManager.RenderTileInstanced(cmd, m_physicalUpdateCount, m_physicalTextureUpdateRequests);
-            //    Profiler.EndSample();
-            //}
+            // if (m_physicalUpdateCount > 0)
+            // {
+            //     Profiler.BeginSample("Update Physical Texture");
+            //     physicalTextureManager.RenderTileInstanced(cmd, m_physicalUpdateCount, m_physicalTextureUpdateRequests);
+            //     Profiler.EndSample();
+            // }
 
+            /*
+             * update the PageTableTexture
+             * we only update the pageTableTexture when:
+             *   (1) m_physicalUpdateCount > 0 (new page need to be loaded.)
+             *   (2) needUpdatePageTable == true
+             */
             if (m_physicalUpdateCount > 0 || needUpdatePageTable)
             {
-                Profiler.BeginSample("Draw PageTable");
+                Profiler.BeginSample("Update PageTableTexture");
                 pageTableManager.DrawPageTable(cmd, m_pageUpdateCount, m_pageTableUpdateRequests);
                 m_lastActiveFrame = time;
                 Profiler.EndSample();
@@ -258,12 +276,24 @@ namespace RuntimeVirtualTexture
             cmd.Clear();
             Profiler.EndSample();
 
+            /*
+             * clear
+             */
             requestsList.Clear();
             m_pageTableUpdateRequests.Dispose();
             // m_physicalTextureUpdateRequests.Dispose();
             m_pageUpdateCount = reqNumber;
         }
 
+        /*
+         * prepare the quad mesh
+         *
+         * id (uv)
+         * 0 (0, 1)     3 (1, 1)
+         *
+         * 1 (0, 0)     2 (1, 0)
+         * 
+         */
         void InitializeMesh()
         {
             List<Vector3> vertexList = new List<Vector3>();
@@ -335,6 +365,7 @@ namespace RuntimeVirtualTexture
             pageTableManager.Dispose();
             physicalTextureManager.Dispose();
             physicalTextureManager.BakeHeight = !physicalTextureManager.BakeHeight;
+            // Debug.Log($"BakeHeight: {physicalTextureManager.BakeHeight}");
             pageTableManager.Initialize();
             physicalTextureManager.Initialize();
             feedBackReader.ReadFeedback(true);
@@ -347,6 +378,36 @@ namespace RuntimeVirtualTexture
             pageTableManager.Dispose();
             physicalTextureManager.Dispose();
             cmd.Release();
+        }
+
+        void TestCase()
+        {
+            int size = 1;
+            NativeArray<PageTableUpdateRequest> requests =
+                new NativeArray<PageTableUpdateRequest>(size * size, Allocator.TempJob);
+            var physicalTextureUpdateRequests = new NativeArray<PageTableUpdateRequest>(size * size, Allocator.TempJob);
+            int tileNum = Mathf.CeilToInt(virtualTextureRect.z) * tilesPerMeter / size;
+            for (int i = 0; i < size; i++)
+            {
+                for (int j = 0; j < size; j++)
+                {
+                    PageTableUpdateRequest req;
+                    req.VirtualCoord = new float2(i * tileNum, j * tileNum);
+                    req.PhysicalCoord = new float2(i, j);
+                    req.Mip = 8 - (int)math.log2(size);
+                    requests[i * size + j] = req;
+                    physicalTextureUpdateRequests[i * size + j] = req;
+                    physicalTextureManager.RenderTile(req);
+                }
+            }
+
+            pageTableManager.DrawPageTable(cmd, size * size, requests);
+            // physicalTextureManager.RenderTileInstanced(cmd, size*size, physicalTextureUpdateRequests);
+            Graphics.ExecuteCommandBuffer(cmd);
+            cmd.Clear();
+            requests.Dispose();
+            physicalTextureUpdateRequests.Dispose();
+            // DrawDebugFeedback();
         }
     }
 }

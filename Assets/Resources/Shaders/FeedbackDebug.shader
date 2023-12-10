@@ -37,6 +37,7 @@
 					o.pos = mul(_ImageMVP, v.positionOS);
 					return o;
 				}
+			
 				half4 FeedbackDebugFragment(Varyings IN) :SV_TARGET
 				{
 					uint screenX = IN.pos.x;
@@ -47,9 +48,9 @@
 					int pageX = (request & 0xffffff) >> 12;
 					int pageY = (request & 0xfff);
 					
-					return half4(pageX/512.0f, pageY/512.0f, mipLevel/10.0f, 1.0f);
-					// return half4(pageX/512.0f, 0, 0, 1.0f);
-					// return half4(0, 0, mipLevel/10.0f, 1.0f);
+					return half4(pageX / 256.0f, pageY / 256.0f, mipLevel / 10.0f, 1.0f);
+					// return half4(pageX / 256.0f, 0, 0, 1.0f);
+					// return half4(0, 0, mipLevel / 10.0f, 1.0f);
 				}
 			ENDHLSL
 		}

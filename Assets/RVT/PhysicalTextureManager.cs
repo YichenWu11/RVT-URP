@@ -63,6 +63,10 @@ namespace RuntimeVirtualTexture
         [SerializeField]
         private Texture2D _compressedPhysicalTextureB;
 
+        public Texture2D PhysicalTextureA => _compressedPhysicalTextureA;
+
+        public Texture2D PhysicalTextureB => _compressedPhysicalTextureB;
+
         private GraphicsFormat m_CompressFormat;
         public ComputeShader runtimeCompressShader;
 
@@ -259,21 +263,21 @@ namespace RuntimeVirtualTexture
              */
 #if UNITY_ANDROID && !UNITY_EDITOR
             m_CompressFormat = GraphicsFormat.RGB_ETC2_UNorm;
-            //m_CompressFormat = GraphicsFormat.RGBA_ASTC4X4_UNorm;
+            // m_CompressFormat = GraphicsFormat.RGBA_ASTC4X4_UNorm;
             
             runtimeCompressShader.DisableKeyword("_COMPRESS_BC3");
             runtimeCompressShader.EnableKeyword("_COMPRESS_ETC2");
             compressResultA = new RenderTexture(m_tilePaddingSize / 4, m_tilePaddingSize / 4,0)
             {
                 graphicsFormat = GraphicsFormat.R16G16B16A16_UInt,
-                //graphicsFormat = GraphicsFormat.R32G32B32A32_UInt,
+                // graphicsFormat = GraphicsFormat.R32G32B32A32_UInt,
                 enableRandomWrite = true,
             };
             compressResultA.name = "compressResultA";
             compressResultB = new RenderTexture(m_tilePaddingSize / 4, m_tilePaddingSize / 4,0)
             {
                 graphicsFormat = GraphicsFormat.R16G16B16A16_UInt,
-                //graphicsFormat = GraphicsFormat.R32G32B32A32_UInt,
+                // graphicsFormat = GraphicsFormat.R32G32B32A32_UInt,
                 enableRandomWrite = true,
             };
             compressResultB.name = "compressResultB";
@@ -315,7 +319,11 @@ namespace RuntimeVirtualTexture
             var terrainData = m_terrain.terrainData;
             terrainHeightMapTexture = terrainData.heightmapTexture;
             Shader.SetGlobalVector(VirtualTextureRectId, m_virtualTextureRect);
-            Shader.SetGlobalFloat(MaxHeightScaleId, 0.5f / terrainData.size.y);
+
+            /* https://forum.unity.com/threads/terraindata-heightmaptexture-float-value-range.672421/ */
+            // 0.5f represent the max height
+            Shader.SetGlobalFloat(MaxHeightScaleId, 0.5f / terrainData.heightmapScale.y);
+
             Shader.SetGlobalFloat(HeightMapResolutionId, terrainData.heightmapResolution);
             if (BakeHeight)
             {
@@ -348,22 +356,23 @@ namespace RuntimeVirtualTexture
                         continue;
                     }
 
-                    cmd.DrawMesh(mesh, renderer.transform.localToWorldMatrix, renderDecalHeightMat, 0,
-                        0); // RenderHeight
+                    cmd.DrawMesh(mesh, renderer.transform.localToWorldMatrix, renderDecalHeightMat,
+                        0, 0); // RenderHeight
                 }
                 else
                 {
-                    renderer.material = new Material(Shader.Find("Universal Render Pipeline/Terrain/RVT_TerrainLit"));
+                    renderer.material = decal.RenderDecalMaterial;
+                    renderer.material.shader = Shader.Find("Universal Render Pipeline/Lit");
                 }
             }
 
             Graphics.ExecuteCommandBuffer(cmd);
 
-            // Important : refresh terrain LOD!!!
+            // Note : refresh terrain LOD!!!
             var terrainData = m_terrain.terrainData;
             var region = new RectInt(0, 0, terrainData.heightmapResolution, terrainData.heightmapResolution);
             terrainData.DirtyHeightmapRegion(region, TerrainHeightmapSyncControl.HeightAndLod);
-            // terrainData.SyncHeightmap();
+            terrainData.SyncHeightmap();
             cmd.Clear();
         }
 
@@ -401,19 +410,32 @@ namespace RuntimeVirtualTexture
             float2 virtualCoord = req.VirtualCoord;
             float2 physicalCoord = req.PhysicalCoord;
             float regionSize = (1 << mipLevel);
-            float posX = Mathf.Floor(virtualCoord.x / regionSize) * regionSize;
-            float posY = Mathf.Floor(virtualCoord.y / regionSize) * regionSize;
 
+            // float posX = Mathf.Floor(virtualCoord.x / regionSize) * regionSize;
+            // float posY = Mathf.Floor(virtualCoord.y / regionSize) * regionSize;
+            float posX = virtualCoord.x;
+            float posY = virtualCoord.y;
+
+            /*
+             * the offset of the uv
+             * cuz the TileBorder(4), we need this param so that we can sample in the inner tile
+            */
             float offsetX = (posX * m_tileSize - TileBorder * regionSize) / (m_pageNum * m_tileSize);
             float offsetY = (posY * m_tileSize - TileBorder * regionSize) / (m_pageNum * m_tileSize);
 
             // float scale = (regionSize / m_pageNum) * ((int)m_tilePaddingSize / (int)m_tileSize);
+            /*
+             * the scale of the uv
+             * such as in LOD0, we scale the initial mesh uv [0,1] to [0, 1 / regionSize(256)]
+             */
             float scale = regionSize * m_tilePaddingSize / (m_pageNum * m_tileSize);
 
             var terrainData = m_terrain.terrainData;
             var layerIndex = 0;
 
+            /* the transform uv */
             m_renderTileMaterial.SetVector(TransformUVId, new Vector4(offsetX, offsetY, scale, m_textureTilingScale));
+
             for (var layer = 0; layer < terrainData.alphamapTextures.Length; layer++)
             {
                 m_renderTileMaterial.SetTexture(ControlMapId, terrainData.alphamapTextures[layer]);
@@ -534,7 +556,7 @@ namespace RuntimeVirtualTexture
                 var region = new RectInt(0, 0, terrainData.heightmapResolution, terrainData.heightmapResolution);
                 terrainData.CopyActiveRenderTextureToHeightmap(region, new Vector2Int(0, 0),
                     TerrainHeightmapSyncControl.HeightAndLod);
-                //terrainData.SyncHeightmap();
+                terrainData.SyncHeightmap();
                 RenderTexture.active = null;
                 originHeightMapTexture.Release();
                 originHeightMapTexture = null;

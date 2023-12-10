@@ -129,6 +129,9 @@ void RenderTileFragment(Varyings IN, out half4 ColorBuffer : SV_Target0, out hal
 
     half4 nrm = normal0 * control.r + normal1 * control.g + normal2 * control.b + normal3 * control.a;
     // avoid risk of NaN when normalizing
+
+    // Note: !!! When use the DXT5nm Format, We only check the nrm.g nrm.a of the nrm.
     NormalBuffer = half4(nrm.g, nrm.a, smoothness, 1.0h);
+    // NormalBuffer = half4(nrm.g, nrm.b, nrm.a, smoothness);
 }
 #endif

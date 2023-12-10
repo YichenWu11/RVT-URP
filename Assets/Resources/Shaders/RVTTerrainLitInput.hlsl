@@ -217,7 +217,7 @@ void SamplePhysicalTexture(float2 uv, out RVTData rvt_data)
     
     float4 pageTable = _PageTableTexture.SampleLevel(sampler_PageTableTexture, pageTableUV, 0) * 256.0f;
     
-    int mipLevel =  pageTable.z;
+    int mipLevel = pageTable.z;
 
     float2 pageOffset = pageTable.xy;
     
@@ -229,24 +229,24 @@ void SamplePhysicalTexture(float2 uv, out RVTData rvt_data)
     float4 physicsTextureA = _PhysicsTextureA.SampleLevel(sampler_PhysicsTextureA, physicalUV, 0);
     rvt_data.albedo = physicsTextureA.rgb;
     
-    // half3 nrm = SAMPLE_TEXTURE2D(_PhysicsTextureB, sampler_PhysicsTextureB, physicalUV).xyz;
+    // half4 physicsTextureB = SAMPLE_TEXTURE2D(_PhysicsTextureB, sampler_PhysicsTextureB, physicalUV);
+    // half3 nrm = physicsTextureB.xyz;
     // nrm.z += 1e-5f;
     // rvt_data.normal = normalize(nrm);
     
     half4 physicsTextureB = SAMPLE_TEXTURE2D(_PhysicsTextureB, sampler_PhysicsTextureB, physicalUV);
-    half3 nrm = UnpackNormalScale(half4(1, physicsTextureB.r, physicsTextureB.r, physicsTextureB.g), 1.0f);
+    // g -> r , a -> g
+    half3 nrm = UnpackNormalScale(half4(1, physicsTextureB.r, 1, physicsTextureB.g), 1.0f);
     nrm.z += 1e-5f;
-    
     rvt_data.normal = normalize(nrm);
     
     rvt_data.metallic = 0;
-    // rvt_data.smoothness = 0;
     rvt_data.smoothness = physicsTextureB.z;
 
 #if defined(DEBUG_RVT)
     
-    rvt_data.normal = half3(0,0,1);
-    rvt_data.albedo = half3(pageOffset / 255.0f, mipLevel / 10.0h);
+    rvt_data.normal = half3(0, 0, 1);
+    rvt_data.albedo = half3(pageOffset / 255.0h, mipLevel / 10.0h);
     rvt_data.smoothness = 0;
     
 #endif
