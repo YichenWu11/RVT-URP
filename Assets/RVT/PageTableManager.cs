@@ -28,8 +28,8 @@ namespace RuntimeVirtualTexture
         public int mipCount { get; }
 
         /*
-        * Parameters For Page Table Management
-        */
+         * Parameters For Page Table Management
+         */
         public PageTable pageTable;
 
         /*
@@ -39,6 +39,9 @@ namespace RuntimeVirtualTexture
         private Material m_renderPageTableMaterial;
         private Mesh m_tileMesh;
 
+        /*
+         * Used for Update PageTableTexture using GPU Instancing
+         */
         MaterialPropertyBlock matBlock;
         Vector4[] pageInfoArray;
         Matrix4x4[] matrixArray;
@@ -55,8 +58,8 @@ namespace RuntimeVirtualTexture
 
             pageTable = new PageTable(mipCount, tileNum);
 
-            //_PageParamBuffer = new ComputeBuffer(tileNum * tileNum, Marshal.SizeOf(typeof(PageTableParams)));
-            //Shader.SetGlobalBuffer(Shader.PropertyToID("_PageParamBuffer"),_PageParamBuffer);
+            // _PageParamBuffer = new ComputeBuffer(tileNum * tileNum, Marshal.SizeOf(typeof(PageTableParams)));
+            // Shader.SetGlobalBuffer(Shader.PropertyToID("_PageParamBuffer"),_PageParamBuffer);
 
             m_renderPageTableMaterial = new Material(Shader.Find("RVT/RenderPageTable"));
             m_renderPageTableMaterial.enableInstancing = true;
@@ -73,7 +76,7 @@ namespace RuntimeVirtualTexture
             _pageTableTexture.format = RenderTextureFormat.ARGBHalf;
             _pageTableTexture.filterMode = FilterMode.Point;
             _pageTableTexture.wrapMode = TextureWrapMode.Clamp;
-            _pageTableTexture.useMipMap = true;
+            _pageTableTexture.useMipMap = false;
             _pageTableTexture.autoGenerateMips = false;
             _pageTableTexture.Create();
             Shader.SetGlobalTexture(Shader.PropertyToID("_PageTableTexture"), _pageTableTexture);

@@ -66,6 +66,7 @@ namespace RuntimeVirtualTexture
             {
                 name = "RuntimeVirtualTexture"
             };
+
             enableRvt = true;
             Shader.EnableKeyword("ENABLE_RVT");
 
@@ -366,6 +367,16 @@ namespace RuntimeVirtualTexture
             physicalTextureManager.Dispose();
             physicalTextureManager.BakeHeight = !physicalTextureManager.BakeHeight;
             // Debug.Log($"BakeHeight: {physicalTextureManager.BakeHeight}");
+            pageTableManager.Initialize();
+            physicalTextureManager.Initialize();
+            feedBackReader.ReadFeedback(true);
+        }
+
+        public void OnEnableCompress()
+        {
+            pageTableManager.Dispose();
+            physicalTextureManager.Dispose();
+            physicalTextureManager.enableCompress = !physicalTextureManager.enableCompress;
             pageTableManager.Initialize();
             physicalTextureManager.Initialize();
             feedBackReader.ReadFeedback(true);

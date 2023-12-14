@@ -10,18 +10,17 @@ namespace RuntimeVirtualTexture
     {
         public override void OnInspectorGUI()
         {
+            base.OnInspectorGUI();
             if (Application.isPlaying)
             {
                 var rvt = (RuntimeVirtualTextureVolume)target;
                 DrawTexture(rvt.physicalTextureManager._physicalTileA, "TileA");
                 DrawTexture(rvt.physicalTextureManager._physicalTileB, "TileB");
+
                 DrawTexture(rvt.physicalTextureManager.PhysicalTextureA, "PhysicalTextureA");
                 DrawTexture(rvt.physicalTextureManager.PhysicalTextureB, "PhysicalTextureB");
+
                 DrawTexture(rvt.pageTableManager._pageTableTexture, "PageTableTexture");
-            }
-            else
-            {
-                base.OnInspectorGUI();
             }
         }
 

@@ -29,6 +29,9 @@ namespace RuntimeVirtualTexture
 
         public int TileBorder = 4;
 
+        [HideInInspector]
+        public bool enableCompress = true;
+
         /*
          * PhysicalTexture configuration
          */
@@ -63,9 +66,18 @@ namespace RuntimeVirtualTexture
         [SerializeField]
         private Texture2D _compressedPhysicalTextureB;
 
-        public Texture2D PhysicalTextureA => _compressedPhysicalTextureA;
+        [SerializeField]
+        private Texture2D _uncompressedPhysicalTextureA;
 
-        public Texture2D PhysicalTextureB => _compressedPhysicalTextureB;
+        [SerializeField]
+        private Texture2D _uncompressedPhysicalTextureB;
+
+        /* Interface for inspector editor */
+        public Texture2D PhysicalTextureA =>
+            (enableCompress) ? _compressedPhysicalTextureA : _uncompressedPhysicalTextureA;
+
+        public Texture2D PhysicalTextureB =>
+            (enableCompress) ? _compressedPhysicalTextureB : _uncompressedPhysicalTextureB;
 
         private GraphicsFormat m_CompressFormat;
         public ComputeShader runtimeCompressShader;
@@ -84,9 +96,12 @@ namespace RuntimeVirtualTexture
         private int m_tilesPerMeter;
         private ComputeBuffer _PhysicalParamBuffer;
 
-        // decal renderers:
+        // decal renderers
         private List<DecalParam> m_Decals;
 
+        /*
+         * Used for the RenderTile of Instancing Version.
+         */
         Matrix4x4[] mvps;
         Vector4[] transformUVs;
 
@@ -114,7 +129,9 @@ namespace RuntimeVirtualTexture
 
             m_tileNum = tileNum;
             m_tileSize = tileSize;
+            /* The actual tile size (size + padding_size) */
             m_tilePaddingSize = (m_tileSize + TileBorder * 2);
+            /* The actual PhysicalTexture size */
             m_textureSize = m_tileNum * m_tilePaddingSize;
             m_pageNum = pageNum;
             m_tileMesh = mesh;
@@ -153,52 +170,11 @@ namespace RuntimeVirtualTexture
             BakeHeight = true;
         }
 
-        public void UpdateTexture()
-        {
-            RenderTextureDescriptor textureDescriptor = new RenderTextureDescriptor
-            {
-                width = m_textureSize,
-                height = m_textureSize,
-                dimension = TextureDimension.Tex2D,
-                depthBufferBits = 0,
-                volumeDepth = 1,
-                colorFormat = RenderTextureFormat.ARGB32,
-                sRGB = false,
-                useMipMap = false,
-                autoGenerateMips = false,
-                enableRandomWrite = false,
-                bindMS = false,
-                useDynamicScale = false,
-                msaaSamples = 1
-            };
-
-            _physicalTileA = new RenderTexture(textureDescriptor);
-            _physicalTileA.bindTextureMS = false;
-            _physicalTileA.name = "PhysicsTextureA";
-            _physicalTileA.wrapMode = TextureWrapMode.Repeat;
-            _physicalTileA.Create();
-
-            _physicalTileB = new RenderTexture(textureDescriptor);
-            _physicalTileB.bindTextureMS = false;
-            _physicalTileB.name = "PhysicsTextureB";
-            _physicalTileB.wrapMode = TextureWrapMode.Repeat;
-            _physicalTileB.Create();
-
-            _physicalTextureIDs = new RenderTargetIdentifier[2];
-            _physicalTextureIDs[0] = new RenderTargetIdentifier(_physicalTileA);
-            _physicalTextureIDs[1] = new RenderTargetIdentifier(_physicalTileB);
-
-            Shader.SetGlobalTexture("_PhysicsTextureA", _physicalTileA);
-            Shader.SetGlobalTexture("_PhysicsTextureB", _physicalTileB);
-            // _PhysicalTextureParams x:TextureSize(4224) y:tileSize(256) z:tileBorder(4)  w:tilePaddingSize(256 + 4 * 2 = 264)
-            Shader.SetGlobalVector("_PhysicalTextureParams",
-                new Vector4(m_textureSize, m_tileSize, TileBorder, m_tilePaddingSize));
-        }
-
         public void Initialize()
         {
-            //_PhysicalParamBuffer=new ComputeBuffer(m_tileNum * m_tileNum, Marshal.SizeOf(typeof(PhysicalTextureParam)));
-            //Shader.SetGlobalBuffer(Shader.PropertyToID("_PhysicalParamBuffer"), _PhysicalParamBuffer);
+            // _PhysicalParamBuffer =
+            //     new ComputeBuffer(m_tileNum * m_tileNum, Marshal.SizeOf(typeof(PhysicalTextureParam)));
+            // Shader.SetGlobalBuffer(Shader.PropertyToID("_PhysicalParamBuffer"), _PhysicalParamBuffer);
             InitializePhysicalTileTexture();
             InitializeCompressionTexture();
             InitializeHeightMapTexture();
@@ -243,6 +219,9 @@ namespace RuntimeVirtualTexture
             Shader.SetGlobalVector("_PhysicalTextureParams",
                 new Vector4(m_textureSize, m_tileSize, TileBorder, m_tilePaddingSize));
 
+            /*
+             * Used for RenderTile (We only render a quad-mesh)
+             */
             var mat = new Matrix4x4
             {
                 m00 = 2,
@@ -297,18 +276,34 @@ namespace RuntimeVirtualTexture
                 enableRandomWrite = true,
             };
 #endif
-            // compressedTexture= new Texture2D(m_tilePaddingSize, m_tilePaddingSize, m_DscFormat, TextureCreationFlags.None);
 
+            /*
+             * Create the PhysicalTextures of Compressed Version
+             */
             _compressedPhysicalTextureA =
                 new Texture2D(m_textureSize, m_textureSize, m_CompressFormat, TextureCreationFlags.None);
             _compressedPhysicalTextureA.name = "_compressedPhysicsTextureA";
             _compressedPhysicalTextureB =
                 new Texture2D(m_textureSize, m_textureSize, m_CompressFormat, TextureCreationFlags.None);
             _compressedPhysicalTextureB.name = "_compressedPhysicsTextureB";
-            Shader.SetGlobalTexture("_PhysicsTextureA", _compressedPhysicalTextureA);
-            Shader.SetGlobalTexture("_PhysicsTextureB", _compressedPhysicalTextureB);
             _compressedPhysicalTextureA.Apply(true, true);
             _compressedPhysicalTextureB.Apply(true, true);
+
+            /*
+             * Create the PhysicalTextures of Uncompressed Version
+             */
+            _uncompressedPhysicalTextureA =
+                new Texture2D(m_textureSize, m_textureSize, GraphicsFormat.R8G8B8A8_UNorm, TextureCreationFlags.None);
+            _uncompressedPhysicalTextureA.name = "_uncompressedPhysicsTextureA";
+            _uncompressedPhysicalTextureB =
+                new Texture2D(m_textureSize, m_textureSize, GraphicsFormat.R8G8B8A8_UNorm, TextureCreationFlags.None);
+            _uncompressedPhysicalTextureB.name = "_uncompressedPhysicsTextureB";
+            _uncompressedPhysicalTextureA.Apply(true, true);
+            _uncompressedPhysicalTextureB.Apply(true, true);
+            Shader.SetGlobalTexture("_PhysicsTextureA",
+                enableCompress ? _compressedPhysicalTextureA : _uncompressedPhysicalTextureA);
+            Shader.SetGlobalTexture("_PhysicsTextureB",
+                enableCompress ? _compressedPhysicalTextureB : _uncompressedPhysicalTextureB);
         }
 
         private void InitializeHeightMapTexture()
@@ -325,6 +320,7 @@ namespace RuntimeVirtualTexture
             Shader.SetGlobalFloat(MaxHeightScaleId, 0.5f / terrainData.heightmapScale.y);
 
             Shader.SetGlobalFloat(HeightMapResolutionId, terrainData.heightmapResolution);
+
             if (BakeHeight)
             {
                 originHeightMapTexture = new RenderTexture(terrainHeightMapTexture.descriptor);
@@ -356,8 +352,11 @@ namespace RuntimeVirtualTexture
                         continue;
                     }
 
+                    /*
+                     * Render the height of model to HeightmapTexture
+                     */
                     cmd.DrawMesh(mesh, renderer.transform.localToWorldMatrix, renderDecalHeightMat,
-                        0, 0); // RenderHeight
+                        0, 0);
                 }
                 else
                 {
@@ -372,7 +371,12 @@ namespace RuntimeVirtualTexture
             var terrainData = m_terrain.terrainData;
             var region = new RectInt(0, 0, terrainData.heightmapResolution, terrainData.heightmapResolution);
             terrainData.DirtyHeightmapRegion(region, TerrainHeightmapSyncControl.HeightAndLod);
-            terrainData.SyncHeightmap();
+
+            /*
+             * no need to Invoke the terrainData.SyncHeight()
+             * https://docs.unity3d.com/cn/2022.3/ScriptReference/TerrainData.DirtyHeightmapRegion.html
+             */
+            // terrainData.SyncHeightmap();
             cmd.Clear();
         }
 
@@ -383,18 +387,35 @@ namespace RuntimeVirtualTexture
         {
             int l = (int)physicalCoord.x * m_tilePaddingSize;
             int b = (int)physicalCoord.y * m_tilePaddingSize;
-            runtimeCompressShader.SetInt("_Size", m_tilePaddingSize);
-            runtimeCompressShader.SetTexture(0, "_SrcTexture", _physicalTileA);
-            runtimeCompressShader.SetTexture(0, "_DstTexture", compressResultA);
-            int size = m_tilePaddingSize / 4;
-            int kernelIndex = runtimeCompressShader.FindKernel("Compress");
-            runtimeCompressShader.Dispatch(kernelIndex, (size + 7) / 8, (size + 7) / 8, 1);
-            Graphics.CopyTexture(compressResultA, 0, 0, 0, 0, size, size, _compressedPhysicalTextureA, 0, 0, l, b);
-            runtimeCompressShader.SetInt("_Size", m_tilePaddingSize);
-            runtimeCompressShader.SetTexture(0, "_SrcTexture", _physicalTileB);
-            runtimeCompressShader.SetTexture(0, "_DstTexture", compressResultB);
-            runtimeCompressShader.Dispatch(kernelIndex, (size + 7) / 8, (size + 7) / 8, 1);
-            Graphics.CopyTexture(compressResultB, 0, 0, 0, 0, size, size, _compressedPhysicalTextureB, 0, 0, l, b);
+            /*
+             * In Compress Version:
+             *     Compress the PhysicalTile to the medium compressResult,
+             *     then Copy to Actual PhysicalTexture
+             * In non-Compress Version:
+             *     Directly Copy to Actual PhysicalTexture
+             */
+            if (enableCompress)
+            {
+                runtimeCompressShader.SetInt("_Size", m_tilePaddingSize);
+                runtimeCompressShader.SetTexture(0, "_SrcTexture", _physicalTileA);
+                runtimeCompressShader.SetTexture(0, "_DstTexture", compressResultA);
+                int size = m_tilePaddingSize / 4;
+                int kernelIndex = runtimeCompressShader.FindKernel("Compress");
+                runtimeCompressShader.Dispatch(kernelIndex, (size + 7) / 8, (size + 7) / 8, 1);
+                Graphics.CopyTexture(compressResultA, 0, 0, 0, 0, size, size, _compressedPhysicalTextureA, 0, 0, l, b);
+                runtimeCompressShader.SetInt("_Size", m_tilePaddingSize);
+                runtimeCompressShader.SetTexture(0, "_SrcTexture", _physicalTileB);
+                runtimeCompressShader.SetTexture(0, "_DstTexture", compressResultB);
+                runtimeCompressShader.Dispatch(kernelIndex, (size + 7) / 8, (size + 7) / 8, 1);
+                Graphics.CopyTexture(compressResultB, 0, 0, 0, 0, size, size, _compressedPhysicalTextureB, 0, 0, l, b);
+            }
+            else
+            {
+                Graphics.CopyTexture(_physicalTileA, 0, 0, 0, 0, m_tilePaddingSize, m_tilePaddingSize,
+                    _uncompressedPhysicalTextureA, 0, 0, l, b);
+                Graphics.CopyTexture(_physicalTileB, 0, 0, 0, 0, m_tilePaddingSize, m_tilePaddingSize,
+                    _uncompressedPhysicalTextureB, 0, 0, l, b);
+            }
         }
 
         /*
@@ -403,7 +424,6 @@ namespace RuntimeVirtualTexture
         * PhysicalCoord: Tile Coordinates on physical texture
         * VirtualCoord: Tile Coordinates on virtual texture
         */
-
         public void RenderTile(PageTableUpdateRequest req)
         {
             int mipLevel = req.Mip;
@@ -556,7 +576,11 @@ namespace RuntimeVirtualTexture
                 var region = new RectInt(0, 0, terrainData.heightmapResolution, terrainData.heightmapResolution);
                 terrainData.CopyActiveRenderTextureToHeightmap(region, new Vector2Int(0, 0),
                     TerrainHeightmapSyncControl.HeightAndLod);
-                terrainData.SyncHeightmap();
+                /*
+                 * no need to Invoke the terrainData.SyncHeight()
+                 * https://docs.unity3d.com/cn/2022.3/ScriptReference/TerrainData.DirtyHeightmapRegion.html
+                 */
+                // terrainData.SyncHeightmap();
                 RenderTexture.active = null;
                 originHeightMapTexture.Release();
                 originHeightMapTexture = null;

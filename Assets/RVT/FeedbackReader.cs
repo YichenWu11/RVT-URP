@@ -50,7 +50,9 @@ namespace RuntimeVirtualTexture
 
             analysisJobHandles = new JobHandle[m_JobNumber];
 
+            /* helper var used for deduplication */
             UniqueRequests = new HashSet<uint>();
+            /* actual request list used for rvt */
             RequestList = new List<uint>();
             // Debug.Log(new Vector4(feedbackFactor, feedbackHeight, feedbackWidth, 1));
         }
@@ -106,6 +108,10 @@ namespace RuntimeVirtualTexture
                 m_HasData = true;
                 request.GetData<uint>().CopyTo(readbackDatas);
             }
+            else
+            {
+                m_HasData = false;
+            }
 
             m_IsReadingBack = false;
         }
@@ -113,15 +119,15 @@ namespace RuntimeVirtualTexture
         public void Clear()
         {
             m_FeedbackBuffer.SetData(clearFeedbackData);
-            /*var kid = clearBufferCS.FindKernel("ClearBuffer");
-            clearBufferCS.SetBuffer(kid, "_feedbackBuffer", m_FeedbackBuffer);
-            clearBufferCS.SetInt("_feedbackSize", m_FeedbackSize);
-            clearBufferCS.Dispatch(kid, 1, 1, 1);*/
         }
 
         public void AnalysisData()
         {
             UniqueRequests.Clear();
+            /*
+             * split the readback data into N segments
+             * so that we can use the Unity JobSystem to analysis it highly parallel
+             */
             int segmentLength = Mathf.CeilToInt(readbackDatas.Length / (float)m_JobNumber);
             for (int i = 0; i < m_JobNumber; i++)
             {
@@ -151,6 +157,10 @@ namespace RuntimeVirtualTexture
                     }
             }
 
+            /*
+             * sort by mipLevel
+             * We firstly process the request which has bigger mipLevel
+             */
             RequestList.Sort((x, y) => -x.CompareTo(y));
         }
 

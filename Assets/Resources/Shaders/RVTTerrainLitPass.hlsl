@@ -1,11 +1,11 @@
 #ifndef UNIVERSAL_RVT_TERRAIN_LIT_PASS_INCLUDED
 #define UNIVERSAL_RVT_TERRAIN_LIT_PASS_INCLUDED
 
-#include "RVTTerrainLitInput.hlsl"
-// #define ENABLE_RVT
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/UnityGBuffer.hlsl"
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DBuffer.hlsl"
+
+#include "RVTTerrainLitInput.hlsl"
 
 struct Attributes_VT
 {
