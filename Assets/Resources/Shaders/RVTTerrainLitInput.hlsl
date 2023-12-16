@@ -49,7 +49,8 @@ TEXTURE2D(_Splat2);
 TEXTURE2D(_Splat3);
 
 #ifdef _NORMALMAP
-TEXTURE2D(_Normal0);     SAMPLER(sampler_Normal0);
+TEXTURE2D(_Normal0);
+SAMPLER(sampler_Normal0);
 TEXTURE2D(_Normal1);
 TEXTURE2D(_Normal2);
 TEXTURE2D(_Normal3);
@@ -126,6 +127,9 @@ inline void InitializeStandardLitSurfaceData(float2 uv, out SurfaceData outSurfa
     outSurfaceData.occlusion = 1;
     outSurfaceData.emission = 0;
 }
+
+// _TerrainRect: x: TerrainPos.x, y: TerrainPos.y, z:Terrain.width, w: Terrain.height
+float4 _TerrainRect;
 
 // Used For RVT: //
 #ifdef ENABLE_RVT

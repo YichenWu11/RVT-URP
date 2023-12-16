@@ -97,6 +97,9 @@ namespace RuntimeVirtualTexture
             var terrainSize = terrain.terrainData.size;
             virtualTextureRect = new float4(transformPos.x, transformPos.z, terrainSize.x, terrainSize.z);
 
+            Shader.SetGlobalVector(Shader.PropertyToID("_TerrainRect"),
+                new Vector4(transformPos.x, transformPos.z, terrainSize.x, terrainSize.z));
+
             int pageNum = Mathf.CeilToInt(virtualTextureRect.z) * tilesPerMeter; // 128 * 2 = 256
             physicalTextureManager =
                 new PhysicalTextureManager(tileNum, tileSize, pageNum, m_tileMesh,
