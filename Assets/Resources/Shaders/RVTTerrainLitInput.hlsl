@@ -128,7 +128,7 @@ inline void InitializeStandardLitSurfaceData(float2 uv, out SurfaceData outSurfa
     outSurfaceData.emission = 0;
 }
 
-// _TerrainRect: x: TerrainPos.x, y: TerrainPos.y, z:Terrain.width, w: Terrain.height
+// _TerrainRect: x: TerrainPos.x, y: TerrainPos.z, z:Terrain.width, w: Terrain.height
 float4 _TerrainRect;
 
 // Used For RVT: //
@@ -144,7 +144,7 @@ SAMPLER(sampler_PageTableTexture);
 
 RWStructuredBuffer<uint> _FeedbackBuffer : register(u1); // make sure you have same id in C# script
 
-// _FeedBackParam x: scaleFactor, y: height, z:width, w:mask
+// _FeedBackParam x: scaleFactor, y: feedbackHeight, z:feedbackWidth, w:lodBias
 float4 _FeedBackParam;
 // _PageTableParams x: _pageNum(256), y: 1/_pageNum (1/256), z:_mipCount(9)
 float4 _PageTableParams;
@@ -178,14 +178,15 @@ void FinalizeFeedbackBuffer(float4 clipPos, float2 uv, out int mipLevel)
     uint offset = scaleY * _FeedBackParam.z + scaleX;
     offset = offset * activate;
 
-    /** compute mip level */
-    // virtual texture size : _PageTableParams.x(256) *_PhysicalTextureParams.y (512),
-    float2 pixel = uv * _PageTableParams.x * _PhysicalTextureParams.y; 
+    /* compute mip level */
+    // virtual texture size : _PageTableParams.x(256) * _PhysicalTextureParams.y (512),
+    float virtualTextureSize = _PageTableParams.x * _PhysicalTextureParams.y;
+    float2 pixel = uv * virtualTextureSize; 
     half2 dx = ddx(pixel);
     half2 dy = ddy(pixel);
 
-    // mipLevel clamp to (0, _mipCount-1(9) )
-    mipLevel = clamp(int(0.5 * log2(max(dot(dx, dx), dot(dy, dy))) + 0.5), 0,  _PageTableParams.z - 1);
+    // mipLevel clamp to (0, _mipCount-1)
+    mipLevel = clamp(int(0.5 * log2(max(dot(dx, dx), dot(dy, dy))) + 0.5 + _FeedBackParam.w), 0,  _PageTableParams.z - 1);
     
     /* compute the corresponding tile index based on current uv */
     float2 pageTableIndex = floor(uv * _PageTableParams.x);
@@ -206,10 +207,10 @@ void FinalizeFeedbackBuffer(float4 clipPos, float2 uv, out int mipLevel)
     
     _FeedbackBuffer[offset] = request;
     
-    //if (offsetX == 0 && offsetY == 0)
-    //{
-    //    _FeedbackBuffer[scaleY * _FeedBackParam.z + scaleX] = request;
-    //}
+    // if (offsetX == 0 && offsetY == 0)
+    // {
+    //     _FeedbackBuffer[offset] = request;
+    // }
 }
 
 

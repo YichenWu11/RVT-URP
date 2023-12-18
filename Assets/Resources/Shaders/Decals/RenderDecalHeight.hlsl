@@ -61,6 +61,7 @@ void RenderDecalHeightFragment(Varyings input, out real4 Height : SV_Target0)
     float2 sampleCoords =
         (input.positionWS.xz - _VirtualTextureRect.xy) * _HeightMapResolution / _VirtualTextureRect.zw;
     float originHeight = UnpackHeightmap(_OriginHeightMap.Load(int3(sampleCoords, 0)));
+    // avoid holes
     if (originHeight > height)
     {
         height = originHeight;

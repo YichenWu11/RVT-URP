@@ -31,12 +31,13 @@ namespace RuntimeVirtualTexture
         private UnsafeHashSet<uint>[] requestLists;
         private JobHandle[] analysisJobHandles;
 
-        public FeedbackReader(int feedbackHeight, int feedbackWidth, int feedbackFactor)
+        public FeedbackReader(int feedbackHeight, int feedbackWidth, int feedbackFactor, int lodBias = 0)
         {
             // For Reading Feedback buffer
             m_FeedbackSize = feedbackHeight * feedbackWidth;
+
             Shader.SetGlobalVector(Shader.PropertyToID("_FeedBackParam"),
-                new Vector4(feedbackFactor, feedbackHeight, feedbackWidth, 1));
+                new Vector4(feedbackFactor, feedbackHeight, feedbackWidth, lodBias));
 
             clearFeedbackData = new uint[m_FeedbackSize];
             for (int i = 0; i < m_FeedbackSize; i++)

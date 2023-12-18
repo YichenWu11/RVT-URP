@@ -133,7 +133,7 @@ namespace RuntimeVirtualTexture
             m_tilePaddingSize = (m_tileSize + TileBorder * 2);
             /* The actual PhysicalTexture size */
             m_textureSize = m_tileNum * m_tilePaddingSize;
-            m_pageNum = pageNum;
+            m_pageNum = pageNum; // 128 * 2
             m_tileMesh = mesh;
             m_virtualTextureRect = virtualTextureRect;
             m_tilesPerMeter = tilesPerMeter;
@@ -429,6 +429,10 @@ namespace RuntimeVirtualTexture
             int mipLevel = req.Mip;
             float2 virtualCoord = req.VirtualCoord;
             float2 physicalCoord = req.PhysicalCoord;
+            /*
+             * For LOD0, regionSize = 1
+             * For LOD1, regionSize = 2
+             */
             float regionSize = (1 << mipLevel);
 
             // float posX = Mathf.Floor(virtualCoord.x / regionSize) * regionSize;
@@ -446,7 +450,7 @@ namespace RuntimeVirtualTexture
             // float scale = (regionSize / m_pageNum) * ((int)m_tilePaddingSize / (int)m_tileSize);
             /*
              * the scale of the uv
-             * such as in LOD0, we scale the initial mesh uv [0,1] to [0, 1 / regionSize(256)]
+             * such as in LOD0, we scale the initial mesh uv [0,1] to [0, 1 / regionSize(256)] (border)
              */
             float scale = regionSize * m_tilePaddingSize / (m_pageNum * m_tileSize);
 

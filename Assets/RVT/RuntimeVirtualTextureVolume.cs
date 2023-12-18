@@ -18,6 +18,7 @@ namespace RuntimeVirtualTexture
         public int tileNum;
         public int feedbackFactor;
         public int maxTileRenderPerFrame;
+        public int lodBias;
 
         [SerializeField]
         private float4 virtualTextureRect;
@@ -85,7 +86,7 @@ namespace RuntimeVirtualTexture
             int feedbackWidth = currentCamera.pixelWidth / feedbackFactor;
 
             feedBackReader =
-                new FeedbackReader(feedbackHeight, feedbackWidth, feedbackFactor);
+                new FeedbackReader(feedbackHeight, feedbackWidth, feedbackFactor, lodBias);
             feedBackReader.Initialize();
 
             var terrain = GetComponentInChildren<Terrain>();

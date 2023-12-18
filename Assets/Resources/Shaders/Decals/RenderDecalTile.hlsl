@@ -128,9 +128,7 @@ Varyings RenderDecalVertex(Attributes input)
     #endif
 
     float z = vertexInput.positionWS.y * _MaxHeightScale;
-    // output.positionCS = vertexInput.positionCS;
     float2 posXZ = vertexInput.positionWS.xz;
-    //posXZ = input.texcoord.xy;
     posXZ = (posXZ - _VirtualTextureTileRect.xy) * _VirtualTextureTileRect.zw;
     posXZ = posXZ * 2 - 1;
 
@@ -158,8 +156,8 @@ void RenderDecalFragment(Varyings input, out half4 PhysicalTex1 : SV_Target0, ou
     // InitializeInputData(input, surfaceData.normalTS, inputData);
 
     // height blend:
-    float2 sampleCoords = (input.positionWS.xz - _VirtualTextureRect.xy) * _HeightMapResolution / _VirtualTextureRect.
-        zw;
+    float2 sampleCoords =
+        (input.positionWS.xz - _VirtualTextureRect.xy) * _HeightMapResolution / _VirtualTextureRect.zw;
     float originHeight = UnpackHeightmap(_OriginHeightMap.Load(int3(sampleCoords, 0)));
     float heightDiff = input.positionWS.y - originHeight / _MaxHeightScale;
 
