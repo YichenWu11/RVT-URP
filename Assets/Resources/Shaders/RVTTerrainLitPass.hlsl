@@ -412,6 +412,9 @@ half4 SplatmapFragment_VT(Varyings_VT IN) : SV_TARGET
     half3 normalTS = half3(0.0h, 0.0h, 1.0h);
 
     half2 virtualUV = (IN.positionWS.xz - _TerrainRect.xy) / _TerrainRect.z; // uv in virtualTexture
+    // float4 screenUVParam = half4(1, 1, 1, 1);
+    // screenUVParam.xy = _ScreenResolution * virtualUV;
+
     /*
      *   Implementation of Runtime Virtual Texture
      *    

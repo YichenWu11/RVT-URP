@@ -42,7 +42,7 @@ Varyings RenderDecalHeightVertex(Attributes input)
 
     float2 posXZ = vertexInput.positionWS.xz;
     posXZ = (posXZ - _VirtualTextureRect.xy) / _VirtualTextureRect.zw;
-    #if SHADER_API_D3D11
+    #if (SHADER_API_D3D11 || SHADER_API_VULKAN)
     posXZ.y = 1 - posXZ.y;
     #endif
     posXZ = posXZ * 2 - 1;

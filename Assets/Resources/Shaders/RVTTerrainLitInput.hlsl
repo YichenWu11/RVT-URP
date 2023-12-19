@@ -128,6 +128,8 @@ inline void InitializeStandardLitSurfaceData(float2 uv, out SurfaceData outSurfa
     outSurfaceData.emission = 0;
 }
 
+// ForDebug
+float4 _ScreenResolution;
 // _TerrainRect: x: TerrainPos.x, y: TerrainPos.z, z:Terrain.width, w: Terrain.height
 float4 _TerrainRect;
 
@@ -187,14 +189,16 @@ void FinalizeFeedbackBuffer(float4 clipPos, float2 uv, out int mipLevel)
 
     // mipLevel clamp to (0, _mipCount-1)
     mipLevel = clamp(int(0.5 * log2(max(dot(dx, dx), dot(dy, dy))) + 0.5 + _FeedBackParam.w), 0,  _PageTableParams.z - 1);
-    
+
     /* compute the corresponding tile index based on current uv */
     float2 pageTableIndex = floor(uv * _PageTableParams.x);
     
-    // int mipTileSize = pow(2, mipLevel);
-    // int encodedPageX = (((int) pageTableIndex.x) / ((int)mipTileSize)) * mipTileSize;
-    // int encodedPageY = (((int) pageTableIndex.y) / ((int)mipTileSize)) * mipTileSize;
-
+    /*
+    int mipTileSize = pow(2, mipLevel);
+    int encodedPageX = (((int) pageTableIndex.x) / ((int)mipTileSize)) * mipTileSize;
+    int encodedPageY = (((int) pageTableIndex.y) / ((int)mipTileSize)) * mipTileSize;
+    */
+    
     int encodedPageX = (((int) pageTableIndex.x) >> mipLevel) << mipLevel;
     int encodedPageY = (((int) pageTableIndex.y) >> mipLevel) << mipLevel;
     
@@ -206,11 +210,7 @@ void FinalizeFeedbackBuffer(float4 clipPos, float2 uv, out int mipLevel)
     uint request = encodedMipLevel | encodedPageX | encodedPageY;
     
     _FeedbackBuffer[offset] = request;
-    
-    // if (offsetX == 0 && offsetY == 0)
-    // {
-    //     _FeedbackBuffer[offset] = request;
-    // }
+    // _FeedbackBuffer[offset] = 10;
 }
 
 

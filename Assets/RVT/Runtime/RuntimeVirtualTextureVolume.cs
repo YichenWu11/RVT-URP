@@ -82,6 +82,9 @@ namespace RuntimeVirtualTexture
                 currentCamera = Camera.current;
             }
 
+            Shader.SetGlobalVector(Shader.PropertyToID("_ScreenResolution"),
+                new Vector4(currentCamera.pixelWidth, currentCamera.pixelHeight, 1, 1));
+
             int feedbackHeight = currentCamera.pixelHeight / feedbackFactor;
             int feedbackWidth = currentCamera.pixelWidth / feedbackFactor;
 

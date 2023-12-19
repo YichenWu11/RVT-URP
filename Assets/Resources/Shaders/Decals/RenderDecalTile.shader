@@ -92,7 +92,7 @@ Shader "RVT/RenderDecalTile"
             Cull Off
 
             HLSLPROGRAM
-            #pragma only_renderers gles gles3 glcore d3d11
+            // #pragma only_renderers gles gles3 glcore d3d11
             #pragma target 2.0
 
             //--------------------------------------

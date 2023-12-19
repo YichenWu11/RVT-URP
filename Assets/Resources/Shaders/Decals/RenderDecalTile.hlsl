@@ -132,7 +132,7 @@ Varyings RenderDecalVertex(Attributes input)
     posXZ = (posXZ - _VirtualTextureTileRect.xy) * _VirtualTextureTileRect.zw;
     posXZ = posXZ * 2 - 1;
 
-    #if SHADER_API_D3D11
+    #if (SHADER_API_D3D11 || SHADER_API_VULKAN)
     posXZ.y = -posXZ.y;
     z = 1 - z;
     #else

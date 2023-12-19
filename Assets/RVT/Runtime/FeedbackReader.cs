@@ -104,7 +104,7 @@ namespace RuntimeVirtualTexture
         */
         void ReadFeedbackCallBack(AsyncGPUReadbackRequest request)
         {
-            if (request.done && readbackDatas.IsCreated)
+            if (request.done && readbackDatas.IsCreated && !request.hasError)
             {
                 m_HasData = true;
                 request.GetData<uint>().CopyTo(readbackDatas);
