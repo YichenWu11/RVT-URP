@@ -177,8 +177,8 @@ void FinalizeFeedbackBuffer(float4 clipPos, float2 uv, out int mipLevel)
     uint scaleY = screenY / _FeedBackParam.x;
     uint activate = (offsetX == 0) & (offsetY == 0);
 
-    uint offset = scaleY * _FeedBackParam.z + scaleX;
-    offset = offset * activate;
+    uint feedbackPos = scaleY * _FeedBackParam.z + scaleX;
+    feedbackPos = feedbackPos * activate;
 
     /* compute mip level */
     // virtual texture size : _PageTableParams.x(256) * _PhysicalTextureParams.y (512),
@@ -209,8 +209,8 @@ void FinalizeFeedbackBuffer(float4 clipPos, float2 uv, out int mipLevel)
     /* result: mip(8) | PageX(12) | PageY(12) */
     uint request = encodedMipLevel | encodedPageX | encodedPageY;
     
-    _FeedbackBuffer[offset] = request;
-    // _FeedbackBuffer[offset] = 10;
+    _FeedbackBuffer[feedbackPos] = request;
+    // _FeedbackBuffer[feedbackPos] = 10;
 }
 
 

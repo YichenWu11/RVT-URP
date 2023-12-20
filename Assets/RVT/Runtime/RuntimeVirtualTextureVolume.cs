@@ -104,7 +104,7 @@ namespace RuntimeVirtualTexture
             Shader.SetGlobalVector(Shader.PropertyToID("_TerrainRect"),
                 new Vector4(transformPos.x, transformPos.z, terrainSize.x, terrainSize.z));
 
-            int pageNum = Mathf.CeilToInt(virtualTextureRect.z) * tilesPerMeter; // 128 * 2 = 256
+            int pageNum = Mathf.CeilToInt(virtualTextureRect.z) * tilesPerMeter;
             physicalTextureManager =
                 new PhysicalTextureManager(tileNum, tileSize, pageNum, m_tileMesh,
                     virtualTextureRect, tilesPerMeter, terrain, decalRenderers);

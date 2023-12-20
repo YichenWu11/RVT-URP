@@ -55,7 +55,6 @@ namespace RuntimeVirtualTexture
             this.pageNum = pageNum;
             // total mip number = log2(256) + 1 = 9
             mipCount = (int)math.log2(pageNum) + 1;
-
             pageTable = new PageTable(mipCount, tileNum);
 
             // _PageParamBuffer = new ComputeBuffer(tileNum * tileNum, Marshal.SizeOf(typeof(PageTableParams)));
