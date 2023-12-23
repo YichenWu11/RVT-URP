@@ -21,6 +21,7 @@ namespace RuntimeVirtualTexture
                 DrawTexture(rvt.physicalTextureManager.PhysicalTextureB, "PhysicalTextureB");
 
                 DrawTexture(rvt.pageTableManager._pageTableTexture, "PageTableTexture");
+                DrawTexture(rvt.pageTableManager._pageTableTexture2D, "PageTableTexture");
             }
         }
 

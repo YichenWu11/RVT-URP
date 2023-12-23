@@ -36,6 +36,8 @@ namespace RuntimeVirtualTexture
          * Parameters For Page Table Rendering
          */
         public RenderTexture _pageTableTexture;
+        public Texture2D _pageTableTexture2D;
+
         private Material m_renderPageTableMaterial;
         private Mesh m_tileMesh;
 
@@ -78,7 +80,16 @@ namespace RuntimeVirtualTexture
             _pageTableTexture.useMipMap = false;
             _pageTableTexture.autoGenerateMips = false;
             _pageTableTexture.Create();
-            Shader.SetGlobalTexture(Shader.PropertyToID("_PageTableTexture"), _pageTableTexture);
+
+            _pageTableTexture2D = new Texture2D(pageNum, pageNum, TextureFormat.RGBAFloat, false, true)
+            {
+                filterMode = FilterMode.Point,
+                wrapMode = TextureWrapMode.Clamp
+            };
+            _pageTableTexture2D.Apply();
+
+            // Shader.SetGlobalTexture(Shader.PropertyToID("_PageTableTexture"), _pageTableTexture);
+            Shader.SetGlobalTexture(Shader.PropertyToID("_PageTableTexture"), _pageTableTexture2D);
             // _PageTableParams x: _pageNum(256) y: 1/_pageNum (1/256) z:_mipCount(9)
             Shader.SetGlobalVector(Shader.PropertyToID("_PageTableParams"),
                 new Vector4(pageNum, 1.0f / pageNum, mipCount, 1));
@@ -91,6 +102,32 @@ namespace RuntimeVirtualTexture
             req.WaitForCompletion();
             Texture2D texture = new Texture2D(512, 512, TextureFormat.ARGB32, false);
             texture.GetRawTextureData<Color32>().CopyFrom(req.GetData<Color32>());
+        }
+
+        public void DrawPageTableCPU(CommandBuffer cmd, int updatesNum, NativeArray<PageTableUpdateRequest> requests)
+        {
+            var pixels = _pageTableTexture2D.GetRawTextureData<Color>();
+
+            for (int i = 0; i < updatesNum; i++)
+            {
+                // construct MVP matrix
+                float regionSize = 1 << requests[i].Mip;
+                float posX = Mathf.Floor(requests[i].VirtualCoord.x / regionSize) * regionSize;
+                float posY = Mathf.Floor(requests[i].VirtualCoord.y / regionSize) * regionSize;
+
+                var color = new Color(requests[i].PhysicalCoord.x / 256.0f,
+                    requests[i].PhysicalCoord.y / 256.0f, requests[i].Mip / 256.0f, 1);
+
+                for (var x = posX; x < posX + regionSize; x++)
+                    for (var y = posY; y < posY + regionSize; y++)
+                    {
+                        var idx = Mathf.CeilToInt(y * pageNum + x);
+                        pixels[idx] = color;
+                    }
+            }
+
+
+            _pageTableTexture2D.Apply(false);
         }
 
         /*

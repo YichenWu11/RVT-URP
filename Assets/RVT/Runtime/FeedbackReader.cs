@@ -5,6 +5,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Unity.Jobs;
+using UnityEngine.Profiling;
 
 namespace RuntimeVirtualTexture
 {
@@ -122,6 +123,43 @@ namespace RuntimeVirtualTexture
             m_FeedbackBuffer.SetData(clearFeedbackData);
         }
 
+        public void AnalysisDataNonParallel()
+        {
+            UniqueRequests.Clear();
+            requestLists[0].Clear();
+
+            foreach (var data in readbackDatas)
+            {
+                if (!UniqueRequests.Contains(data))
+                {
+                    UniqueRequests.Add(data);
+                    RequestList.Add(data);
+                }
+            }
+
+            // uint lastPixel = 0xffffffff;
+            // foreach (var data in readbackDatas)
+            // {
+            //     if (data == lastPixel)
+            //     {
+            //         continue;
+            //     }
+
+            //     if (lastPixel != 0xffffffff)
+            //     {
+            //         if (!UniqueRequests.Contains(data))
+            //         {
+            //             UniqueRequests.Add(data);
+            //             RequestList.Add(data);
+            //         }
+            //     }
+
+            //     lastPixel = data;
+            // }
+
+            RequestList.Sort((x, y) => -x.CompareTo(y));
+        }
+
         public void AnalysisData()
         {
             UniqueRequests.Clear();
@@ -146,6 +184,8 @@ namespace RuntimeVirtualTexture
             }
 
             // Merge Request Lists
+            Profiler.BeginSample("MergeRequests");
+
             for (int i = 0; i < m_JobNumber; i++)
             {
                 analysisJobHandles[i].Complete();
@@ -157,6 +197,8 @@ namespace RuntimeVirtualTexture
                         RequestList.Add(req);
                     }
             }
+
+            Profiler.EndSample();
 
             /*
              * sort by mipLevel
