@@ -18,7 +18,7 @@ namespace RuntimeVirtualTexture
 
         public void Execute()
         {
-            uint lastPixel = 0x0;
+            uint lastPixel = 0xffffffff;
             for (var i = start; i < end; i++)
             {
                 if (data[i] == lastPixel)
@@ -26,7 +26,7 @@ namespace RuntimeVirtualTexture
                     continue;
                 }
 
-                if (lastPixel != 0x0)
+                if (lastPixel != 0xffffffff)
                 {
                     requests.Add(lastPixel);
                 }

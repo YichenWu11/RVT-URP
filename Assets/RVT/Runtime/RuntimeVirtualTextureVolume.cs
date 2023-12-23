@@ -169,6 +169,7 @@ namespace RuntimeVirtualTexture
                      * readback the feedback buffer from GPU to CPU
                      */
                     feedBackReader.ReadFeedback(false);
+                    // Debug.Log($"Readback {Time.frameCount}");
                     Profiler.EndSample();
                 }
 
@@ -275,6 +276,9 @@ namespace RuntimeVirtualTexture
             {
                 Profiler.BeginSample("Update PageTableTexture");
                 pageTableManager.DrawPageTable(cmd, m_pageUpdateCount, m_pageTableUpdateRequests);
+                /*
+                 * update the lastActiveFrame
+                 */
                 m_lastActiveFrame = time;
                 Profiler.EndSample();
             }
@@ -283,6 +287,9 @@ namespace RuntimeVirtualTexture
             Graphics.ExecuteCommandBuffer(cmd);
             cmd.Clear();
             Profiler.EndSample();
+
+            // Debug.Log(
+            //     $"{needUpdatePageTable} Requests {m_pageUpdateCount} Update {m_physicalUpdateCount} All {requestsList.Count}");
 
             /*
              * clear
@@ -400,21 +407,22 @@ namespace RuntimeVirtualTexture
 
         void TestCase()
         {
-            int size = 1;
+            int size = 2;
             NativeArray<PageTableUpdateRequest> requests =
                 new NativeArray<PageTableUpdateRequest>(size * size, Allocator.TempJob);
             var physicalTextureUpdateRequests = new NativeArray<PageTableUpdateRequest>(size * size, Allocator.TempJob);
-            int tileNum = Mathf.CeilToInt(virtualTextureRect.z) * tilesPerMeter / size;
+            int mipTileNum = Mathf.CeilToInt(virtualTextureRect.z) * tilesPerMeter / size;
             for (int i = 0; i < size; i++)
             {
                 for (int j = 0; j < size; j++)
                 {
                     PageTableUpdateRequest req;
-                    req.VirtualCoord = new float2(i * tileNum, j * tileNum);
-                    req.PhysicalCoord = new float2(i, j);
+                    req.VirtualCoord = new float2(i * mipTileNum, j * mipTileNum);
+                    int no = i * size + j;
+                    req.PhysicalCoord = new float2(no % tileNum, no / tileNum);
                     req.Mip = 8 - (int)math.log2(size);
                     requests[i * size + j] = req;
-                    physicalTextureUpdateRequests[i * size + j] = req;
+                    physicalTextureUpdateRequests[no] = req;
                     physicalTextureManager.RenderTile(req);
                 }
             }
