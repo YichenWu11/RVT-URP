@@ -398,6 +398,21 @@ Varyings_VT SplatmapVert_VT(Attributes_VT v)
     return o;
 }
 
+half4 FeedbackFragment_VT(Varyings_VT IN) : SV_TARGET
+{
+    UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(IN);
+
+    half3 normalTS = half3(0.0h, 0.0h, 1.0h);
+
+    half2 virtualUV = (IN.positionWS.xz - _TerrainRect.xy) / _TerrainRect.z;
+
+    #if defined(ENABLE_RVT)
+    return FinalizeFeedbackTexture(IN.clipPos, virtualUV);
+    #endif
+
+    return half4(1.0h, 1.0h, 0.0h, 1.0h);
+}
+
 #ifdef TERRAIN_GBUFFER
 FragmentOutput SplatmapFragment(Varyings IN)
 #else

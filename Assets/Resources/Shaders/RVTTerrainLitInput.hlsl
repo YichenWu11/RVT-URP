@@ -163,6 +163,50 @@ struct RVTData
     half metallic;
 };
 
+half4 FinalizeFeedbackTexture(float4 clipPos, float2 uv)
+{
+    int mipLevel;
+    
+    uint screenX = clipPos.x;
+    uint screenY = clipPos.y;
+
+    uint offsetX = screenX % _FeedBackParam.x;
+    uint offsetY = screenY % _FeedBackParam.x;
+
+    // multiply by (offsetX == 0) & (offsetY == 0) to reduce texture popping 
+    uint scaleX = screenX / _FeedBackParam.x;
+    uint scaleY = screenY / _FeedBackParam.x;
+    uint activate = (offsetX == 0) & (offsetY == 0);
+
+    uint feedbackPos = scaleY * _FeedBackParam.z + scaleX;
+    feedbackPos = feedbackPos * activate;
+
+    /* compute mip level */
+    // virtual texture size : _PageTableParams.x(256) * _PhysicalTextureParams.y (512),
+    float virtualTextureSize = _PageTableParams.x * _PhysicalTextureParams.y;
+    float2 pixel = uv * virtualTextureSize; 
+    half2 dx = ddx(pixel);
+    half2 dy = ddy(pixel);
+
+    // mipLevel clamp to (0, _mipCount-1)
+    mipLevel = clamp(int(0.5 * log2(max(dot(dx, dx), dot(dy, dy))) + 0.5 + _FeedBackParam.w), 0,  _PageTableParams.z - 1);
+
+    /* compute the corresponding tile index based on current uv */
+    float2 pageTableIndex = floor(uv * _PageTableParams.x);
+    
+    /*
+    int mipTileSize = pow(2, mipLevel);
+    int encodedPageX = (((int) pageTableIndex.x) / ((int)mipTileSize)) * mipTileSize;
+    int encodedPageY = (((int) pageTableIndex.y) / ((int)mipTileSize)) * mipTileSize;
+    */
+    
+    int encodedPageX = (((int) pageTableIndex.x) >> mipLevel) << mipLevel;
+    int encodedPageY = (((int) pageTableIndex.y) >> mipLevel) << mipLevel;
+    
+    return half4(encodedPageX / 255.0h, encodedPageY / 255.0h, mipLevel / 255.0h, 1.0h);
+    // return half4(1.0h, 0.0h, 0.0h, 1.0h);
+}
+
 /** This should be called at the end of the pixel shader to write out the gathered VT feedback info to the _FeedbackBuffer. */
 void FinalizeFeedbackBuffer(float4 clipPos, float2 uv, out int mipLevel)
 {

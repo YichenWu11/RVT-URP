@@ -10,6 +10,9 @@ namespace RuntimeVirtualTexture
 {
     public class RuntimeVirtualTextureVolume : MonoBehaviour
     {
+        public Camera feedbackCamera;
+        public Camera mainCamera;
+
         /*
          * Configuration parameters:
          */
@@ -89,7 +92,7 @@ namespace RuntimeVirtualTexture
             int feedbackWidth = currentCamera.pixelWidth / feedbackFactor;
 
             feedBackReader =
-                new FeedbackReader(feedbackHeight, feedbackWidth, feedbackFactor, lodBias);
+                new FeedbackReader(feedbackHeight, feedbackWidth, feedbackFactor, lodBias, feedbackCamera, mainCamera);
             feedBackReader.Initialize();
 
             var terrain = GetComponentInChildren<Terrain>();
@@ -136,7 +139,15 @@ namespace RuntimeVirtualTexture
                 // TestCase();
                 // return;
 
+
                 Profiler.BeginSample("Feedback");
+
+                Profiler.BeginSample("FeedbackRender");
+
+                feedBackReader.FeedbackRender();
+
+                Profiler.EndSample();
+
                 if (feedBackReader.IsReading())
                 {
                     Profiler.BeginSample("ApplyUpdates");

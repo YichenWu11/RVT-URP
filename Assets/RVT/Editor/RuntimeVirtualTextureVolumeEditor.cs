@@ -21,7 +21,9 @@ namespace RuntimeVirtualTexture
                 DrawTexture(rvt.physicalTextureManager.PhysicalTextureB, "PhysicalTextureB");
 
                 DrawTexture(rvt.pageTableManager._pageTableTexture, "PageTableTexture");
-                DrawTexture(rvt.pageTableManager._pageTableTexture2D, "PageTableTexture");
+                DrawTexture(rvt.pageTableManager._pageTableTexture2D, "PageTableTexture2D");
+
+                DrawTexture(rvt.feedBackReader.m_FeedbackTex, "FeedbackTex");
             }
         }
 

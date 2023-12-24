@@ -5,6 +5,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Unity.Jobs;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.Profiling;
 
 namespace RuntimeVirtualTexture
@@ -12,6 +13,8 @@ namespace RuntimeVirtualTexture
     [Serializable]
     public class FeedbackReader
     {
+        public Camera feedbackCamera;
+
         /*
          * For Reading Feedback buffer
          */
@@ -21,6 +24,9 @@ namespace RuntimeVirtualTexture
         private uint[] clearFeedbackData; // used for clearing feedback buffer per frame
         private ComputeBuffer m_FeedbackBuffer;
         private ComputeBuffer m_DebugBuffer;
+
+        public RenderTexture m_FeedbackTex;
+        public Camera mainCamera;
 
         /*
          * feedback Analysis
@@ -32,13 +38,30 @@ namespace RuntimeVirtualTexture
         private UnsafeHashSet<uint>[] requestLists;
         private JobHandle[] analysisJobHandles;
 
-        public FeedbackReader(int feedbackHeight, int feedbackWidth, int feedbackFactor, int lodBias = 0)
+        public FeedbackReader(int feedbackHeight, int feedbackWidth, int feedbackFactor, int lodBias,
+            Camera feedbackCamera, Camera mainCamera)
         {
+            this.feedbackCamera = feedbackCamera;
+            this.mainCamera = mainCamera;
+
             // For Reading Feedback buffer
             m_FeedbackSize = feedbackHeight * feedbackWidth;
 
             Shader.SetGlobalVector(Shader.PropertyToID("_FeedBackParam"),
                 new Vector4(feedbackFactor, feedbackHeight, feedbackWidth, lodBias));
+
+            /* Test */
+            m_FeedbackTex = new RenderTexture(feedbackWidth, feedbackHeight, 0, GraphicsFormat.R8G8B8A8_UNorm)
+            {
+                useMipMap = false,
+                filterMode = FilterMode.Point,
+                wrapMode = TextureWrapMode.Clamp
+            };
+            m_FeedbackTex.Create();
+            feedbackCamera.targetTexture = m_FeedbackTex;
+            feedbackCamera.enabled = false;
+
+            /* Test */
 
             clearFeedbackData = new uint[m_FeedbackSize];
             for (int i = 0; i < m_FeedbackSize; i++)
@@ -57,6 +80,17 @@ namespace RuntimeVirtualTexture
             /* actual request list used for rvt */
             RequestList = new List<uint>();
             // Debug.Log(new Vector4(feedbackFactor, feedbackHeight, feedbackWidth, 1));
+        }
+
+        public void FeedbackRender()
+        {
+            var fbTransform = feedbackCamera.transform;
+            var mcTransform = mainCamera.transform;
+            fbTransform.position = mcTransform.position;
+            fbTransform.rotation = mcTransform.rotation;
+            feedbackCamera.projectionMatrix = mainCamera.projectionMatrix;
+
+            feedbackCamera.Render();
         }
 
         public void Initialize()

@@ -125,8 +125,7 @@ namespace RuntimeVirtualTexture
                         pixels[idx] = color;
                     }
             }
-
-
+            
             _pageTableTexture2D.Apply(false);
         }
 
