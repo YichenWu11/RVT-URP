@@ -126,6 +126,10 @@ namespace RuntimeVirtualTexture
             if (Input.GetKeyDown(KeyCode.Escape))
                 Application.Quit();
 
+#if !UNITY_ANDROID
+            Application.targetFrameRate = -1;
+#endif
+
             /* calculate the dps */
             deltaTime += (Time.unscaledDeltaTime - deltaTime) * 0.1f;
             float fps = 1.0f / deltaTime;
