@@ -38,12 +38,12 @@ namespace RuntimeVirtualTexture
         public PhysicalTextureManager physicalTextureManager;
         public PageTableManager pageTableManager;
 
-//#if UNITY_EDITOR
+        //#if UNITY_EDITOR
         /*
          * Debug the Feedback buffer:
          */
-//        public FeedBackDebugger feedBackDebugger;
-//#endif  
+        //        public FeedBackDebugger feedBackDebugger;
+        //#endif  
 
         /*
          * the new page and physical tile per frame:
@@ -114,11 +114,11 @@ namespace RuntimeVirtualTexture
             pageTableManager.Initialize();
 
             m_lastActiveFrame = 0;
-//#if UNITY_EDITOR
-//            // For Debugging Feedback buffer:
+            //#if UNITY_EDITOR
+            //            // For Debugging Feedback buffer:
             //           feedBackDebugger = new FeedBackDebugger();
             //           feedBackDebugger.InitializeRT(feedbackHeight, feedbackWidth);
-//#endif
+            //#endif
         }
 
         void Update()
@@ -136,7 +136,6 @@ namespace RuntimeVirtualTexture
 
             if (enableRvt)
             {
-                // physicalTextureManager.ActivateDecals();
                 // TestCase();
                 // return;
 
@@ -154,11 +153,11 @@ namespace RuntimeVirtualTexture
                 {
                     if (feedBackReader.HasData())
                     {
-//#if UNITY_EDITOR
-//                        Profiler.BeginSample("Draw Debug Feedback Buffer");
+                        //#if UNITY_EDITOR
+                        //                        Profiler.BeginSample("Draw Debug Feedback Buffer");
                         //                       feedBackReader.DrawDebugFeedback(feedBackDebugger);
-//                        Profiler.EndSample();
-//#endif
+                        //                        Profiler.EndSample();
+                        //#endif
 
                         /*
                          * Get and Analysis Data
@@ -227,11 +226,12 @@ namespace RuntimeVirtualTexture
                 uint tileId;
                 if (pageTableManager.pageTable.IsActive(req, out var activeFrame))
                 {
-                    if (activeFrame != m_lastActiveFrame)
-                    {
-                        // Debug.Log($"{m_lastActiveFrame} {activeFrame}");
-                        needUpdatePageTable = true;
-                    }
+                    // if (activeFrame != m_lastActiveFrame)
+                    // {
+                    //     needUpdatePageTable = true;
+                    // }
+
+                    // Debug.Log($"{time} {req} {m_lastActiveFrame} {activeFrame} {needUpdatePageTable}");
 
                     tileId = pageTableManager.pageTable.GetTileId(req);
                     pageTableManager.pageTable.Refresh(req, time);
@@ -278,6 +278,7 @@ namespace RuntimeVirtualTexture
              */
             if (m_physicalUpdateCount > 0 || needUpdatePageTable)
             {
+                // Debug.Log($"{time} draw pagetable");
                 Profiler.BeginSample("Update PageTableTexture");
                 pageTableManager.DrawPageTable(cmd, m_pageUpdateCount, m_pageTableUpdateRequests);
                 /*
@@ -411,6 +412,8 @@ namespace RuntimeVirtualTexture
 
         void TestCase()
         {
+            // physicalTextureManager.ActivateDecals();
+
             int size = 2;
             NativeArray<PageTableUpdateRequest> requests =
                 new NativeArray<PageTableUpdateRequest>(size * size, Allocator.TempJob);
