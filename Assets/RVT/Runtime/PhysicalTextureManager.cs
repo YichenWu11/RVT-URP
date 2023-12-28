@@ -516,7 +516,8 @@ namespace RuntimeVirtualTexture
         }
 
         /*
-         * RenderTileInstanced not used in mobile version
+         * RenderTileInstanced not used now
+         * Because We can not do the Compression when using RenderTileInstanced.
          */
         public void RenderTileInstanced(CommandBuffer cmd, int updatesNum, NativeArray<PageTableUpdateRequest> requests)
         {

@@ -2147,7 +2147,7 @@ MonoBehaviour:
     RequestList: 
   physicalTextureManager:
     BakeHeight: 1
-    TileBorder: 0
+    TileBorder: 4
     enableCompress: 0
     _physicalTileA: {fileID: 0}
     _physicalTileB: {fileID: 0}

@@ -1,6 +1,5 @@
 #include "BCCompress.hlsl"
 #include "ETCCompress.hlsl"
-#include "ASTC_Encode.hlsl"
 //#pragma enable_d3d11_debug_symbols
 #pragma multi_compile _COMPRESS_BC3 _COMPRESS_ETC2
 

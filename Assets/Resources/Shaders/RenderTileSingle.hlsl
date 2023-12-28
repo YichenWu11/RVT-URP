@@ -106,6 +106,7 @@ void RenderTileFragment(Varyings IN, out half4 PhysicalTex1 : SV_Target0, out ha
 
     half4 nrm = normal0 * control.r + normal1 * control.g + normal2 * control.b + normal3 * control.a;
     // avoid risk of NaN when normalizing
+    // Note: !!! When use the DXT5nm Format, We only check the nrm.g nrm.a of the nrm.
     PhysicalTex2 = half4(nrm.g, nrm.a, smoothness, 1.0h);
     // PhysicalTex2 = half4(nrm.r, nrm.g, nrm.b, 1.0h);
 }
