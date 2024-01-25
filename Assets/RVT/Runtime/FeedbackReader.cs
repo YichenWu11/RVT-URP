@@ -51,7 +51,7 @@ namespace RuntimeVirtualTexture
                 new Vector4(feedbackFactor, feedbackHeight, feedbackWidth, lodBias));
 
             /* Test */
-            m_FeedbackTex = new RenderTexture(feedbackWidth, feedbackHeight, 0, GraphicsFormat.R8G8B8A8_UNorm)
+            m_FeedbackTex = new RenderTexture(feedbackWidth * 8, feedbackHeight * 8, 0, GraphicsFormat.R8G8B8A8_UNorm)
             {
                 useMipMap = false,
                 filterMode = FilterMode.Point,
